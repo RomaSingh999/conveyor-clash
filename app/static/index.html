@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Conveyor Clash</title>
+  <meta name="description" content="A real-time warehouse guessing game for 2 to 6 players. Pick the package nobody else picks.">
+  <meta name="theme-color" content="#ffc400">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c79558'/%3E%3Crect x='13' width='6' height='32' fill='%23e9ddb8'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="hazard" aria-hidden="true"></div>
+  <div id="banner" class="banner" role="status" hidden></div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-box" aria-hidden="true"></span>Conveyor Clash</div>
+    <button id="btn-how" class="link-btn" type="button">How to play</button>
+  </header>
+
+  <main id="app">
+    <!-- HOME -->
+    <section id="view-home" class="view" aria-labelledby="home-title">
+      <h1 id="home-title" class="hero">Pick the package nobody else picks.</h1>
+      <p class="lead">A quick live game for 2 to 6 players. Everyone joins from their own phone or laptop with a room code. No sign-up, nothing to install.</p>
+
+      <div class="belt-wrap deco" aria-hidden="true">
+        <div class="belt deco-belt">
+          <div class="pkg"><span class="pkg-label">Crate</span><span class="pkg-value">7</span></div>
+          <div class="pkg"><span class="pkg-label">Pallet</span><span class="pkg-value">3</span></div>
+          <div class="pkg fragile"><span class="pkg-label">Parcel</span><span class="pkg-value">−4</span><span class="pkg-stamp">Fragile</span></div>
+          <div class="pkg"><span class="pkg-label">Barrel</span><span class="pkg-value">9</span></div>
+          <div class="pkg"><span class="pkg-label">Sack</span><span class="pkg-value">5</span></div>
+        </div>
+      </div>
+
+      <form id="form-home" class="panel form" novalidate>
+        <p id="invite-note" class="invite" hidden></p>
+        <label for="in-name">Your name</label>
+        <input id="in-name" type="text" maxlength="16" autocomplete="nickname" placeholder="Asha" required>
+
+        <button id="btn-create" class="btn primary" type="submit">Create a room</button>
+
+        <div class="or"><span>or join a friend's room</span></div>
+
+        <div class="join-row">
+          <div>
+            <label for="in-code" class="sr-only">Room code</label>
+            <input id="in-code" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Room code" inputmode="text">
+          </div>
+          <button id="btn-join" class="btn" type="button">Join room</button>
+        </div>
+        <p id="home-error" class="error" role="alert" hidden></p>
+      </form>
+    </section>
+
+    <!-- LOBBY -->
+    <section id="view-lobby" class="view" aria-labelledby="lobby-title" hidden>
+      <h2 id="lobby-title" class="section-title">Waiting for players</h2>
+      <div class="lobby-grid">
+        <div class="panel code-card">
+          <span class="muted">Room code</span>
+          <strong id="lobby-code" class="code">----</strong>
+          <button id="btn-copy" class="btn" type="button">Copy invite link</button>
+          <p class="muted small">Friends open the link or type the code on the home page.</p>
+        </div>
+        <div class="panel">
+          <h3 id="lobby-count" class="panel-title">Players</h3>
+          <ul id="lobby-players" class="roster"></ul>
+          <p id="lobby-hint" class="muted"></p>
+          <div class="lobby-actions">
+            <button id="btn-start" class="btn primary" type="button">Start game</button>
+            <button id="btn-add-bot" class="btn" type="button">Add a bot player</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 class="panel-title">How a round works</h3>
+        <div id="lobby-rules"></div>
+      </div>
+      <button id="btn-leave-lobby" class="link-btn" type="button">Leave room</button>
+    </section>
+
+    <!-- GAME -->
+    <section id="view-game" class="view" aria-label="Game" hidden>
+      <div id="final-panel" class="panel final" hidden>
+        <h2 id="final-title" class="final-title"></h2>
+        <ol id="final-board" class="board"></ol>
+        <p id="final-hint" class="muted"></p>
+        <div class="final-actions">
+          <button id="btn-again" class="btn primary" type="button">Play again</button>
+          <button id="btn-leave-final" class="btn" type="button">Leave room</button>
+        </div>
+      </div>
+
+      <div id="play-area">
+        <div class="hud">
+          <div class="round-info">
+            <span id="round-label" class="round-label">Round 1 of 8</span>
+            <span id="double-badge" class="badge hot" hidden>Final round: double points</span>
+            <span class="room-tag">Room <span id="game-code"></span></span>
+          </div>
+          <div id="timer" class="timer" aria-hidden="true">
+            <div class="timer-track"><div id="timer-fill" class="timer-fill"></div></div>
+            <span id="timer-text" class="timer-text"></span>
+          </div>
+        </div>
+
+        <p id="status" class="status" aria-live="polite"></p>
+
+        <div class="belt-wrap">
+          <div id="belt" class="belt" role="group" aria-label="Packages on the belt"></div>
+        </div>
+
+        <div id="actions" class="actions">
+          <button id="btn-forklift" class="btn forklift" type="button" aria-pressed="false">Use forklift</button>
+          <button id="btn-lock" class="btn primary" type="button">Lock in</button>
+        </div>
+
+        <section id="result-panel" class="panel" hidden aria-live="polite">
+          <div class="panel-head">
+            <h3 class="panel-title">What happened</h3>
+            <span id="next-note" class="muted small"></span>
+          </div>
+          <ul id="result-list" class="result-list"></ul>
+        </section>
+      </div>
+
+      <section class="panel">
+        <h3 class="panel-title">Scoreboard</h3>
+        <ol id="scoreboard" class="board"></ol>
+      </section>
+
+      <details id="history" class="panel">
+        <summary>Round history</summary>
+        <p class="muted small">Numbers are the packages each player picked and what they scored. Use it to guess what others will do next.</p>
+        <div id="history-table" class="table-scroll"></div>
+      </details>
+
+      <button id="btn-leave-game" class="link-btn" type="button">Leave game</button>
+    </section>
+  </main>
+
+  <div id="emote-bar" class="emote-bar" hidden aria-label="Send a reaction"></div>
+  <div id="emote-layer" class="emote-layer" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <dialog id="how-dialog" class="dialog" aria-labelledby="how-title">
+    <h2 id="how-title" class="section-title">How to play</h2>
+    <div id="how-rules"></div>
+    <button id="btn-how-close" class="btn primary" type="button">Got it</button>
+  </dialog>
+
+  <template id="tpl-rules">
+    <ol class="rules">
+      <li><strong>Look at the belt.</strong> Five packages, each worth some points.</li>
+      <li><strong>Pick one in secret.</strong> Everyone locks in before anything is revealed, or the 20 second timer runs out.</li>
+      <li><strong>Pick one nobody else picks.</strong> If you are the only one on a package, you score it. If two or more players pick the same package, it clashes and nobody scores it.</li>
+      <li><strong>Forklift, once per game.</strong> Grab two packages in one round. It only pays if neither one clashes.</li>
+      <li><strong>Fragile packages cost points.</strong> Alone on one, you lose points. A clash on it is harmless. If you run out of time, you stumble into it.</li>
+      <li><strong>Eight rounds.</strong> The last round is worth double. Highest score wins.</li>
+    </ol>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
